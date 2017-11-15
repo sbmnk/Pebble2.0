@@ -1,4 +1,4 @@
-package Pebble_app;
+ 
 
 
 /**
@@ -9,8 +9,6 @@ package Pebble_app;
  */
 public class IllegalFileFormatException extends Exception
 {
-   String msg;
-   IllegalFileFormatException(String msg){
-    this.msg = msg;
-    }
+   public IllegalFileFormatException (){}
+   public IllegalFileFormatException (String msg){super(msg);}
 }

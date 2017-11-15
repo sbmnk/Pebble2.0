@@ -1,4 +1,4 @@
-package Pebble_app;
+ 
 
 
 /**
@@ -9,7 +9,7 @@ package Pebble_app;
  */
 public class OutOfPebblesException extends Exception
 {
-    private String msg;
-    OutOfPebblesException(){};
-    OutOfPebblesException(String msg){this.msg = msg;}
+   
+    public OutOfPebblesException(){};
+    public OutOfPebblesException(String msg){super(msg);}
 }

@@ -1,4 +1,4 @@
-package Pebble_app;
+ 
 
 
 /**
@@ -18,7 +18,7 @@ public class BlackBag extends Bag
      this.bagname = bagname;
  }
  public synchronized Pebble drawPebble()throws OutOfPebblesException {
-     if (pebbles.length==0){throw new OutOfPebblesException("This bag is out of pebbles");}
+     if (pebbles.length==0){throw new OutOfPebblesException();}
      if (pebbles.length >1){
      Random randomNumGen = new Random();
      int pebbleno = randomNumGen.nextInt(pebbles.length);

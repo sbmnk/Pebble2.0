@@ -1,32 +1,18 @@
-package Pebble_app;
 
-
-/**
- * Write a description of class PebbleGame here.
- * 
- * @author (your name) 
- * @version (a version number or a date)
- */
 import java.util.Scanner;
-import java.io.File;
+import java.io.*;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
 public class PebbleGame implements Runnable
 {
-   private  int noofplayers;
+   private  AtomicBoolean gamewon = new AtomicBoolean(); 
    private PebbleGame.Player[] players ; 
    private  BlackBag[]blackbags = new BlackBag[Constants.AMOUNT_OF_BAGS.getInt()];
-   private Thread gamethread;
-   PebbleGame(){}
-   public void addPlayer(String name)  {
-      //NEED TO ADD AN EXCEPTION
-       for (int i = 0 ; i<players.length;i++){
-           if(players[i]==null){
-               players[i] = new PebbleGame.Player(name);
-               return;
-            }
-        }
+   PebbleGame(){
+    
     }
-   private static boolean checkFile(File a){
+   private static boolean checkFile(File a) throws InvalidFileException{
+    
        if (a.exists()){
            String fileformat =getFileExtension(a); 
            if(fileformat.equals("txt")){
@@ -42,9 +28,10 @@ public class PebbleGame implements Runnable
         }
         }
     }
-        return false;    
+        throw new InvalidFileException();   
     }
-   private static Integer[] readFile(File a){
+    
+   private Integer[] readFile(File a) throws InsufficientAmountOfPebblesException{
         try{
         Scanner sc = new Scanner (a);
         if (sc.hasNextLine()){
@@ -54,96 +41,93 @@ public class PebbleGame implements Runnable
                for (int i = 0; i<str.length; i++){
                    pbs[i] = Integer.valueOf(str[i]);
                 }
+                if (pbs.length<(players.length*11)){throw new InsufficientAmountOfPebblesException("Make sure that every bag has at least 11 pebbles for each player");}
                 return pbs;
             }
         } catch (java.io.FileNotFoundException |IllegalStateException e){
-            System.out.println("Please enter file containing comma seperated list of Integers");            
+            System.out.println("Please enter an existing file containing comma seperated list of Integers");            
      
         }
         return null;}
         
-   private void initialiseBags(){
+   private void initialiseBags() throws  IllegalWeightException, InsufficientAmountOfPebblesException{
        boolean correct ;
        File [] files ;
        String[] blackbagnames = {"X","Y","Z"};
        String[] whitebagnames = {"A","B","C"};
-       do{
        correct = true;
-        files = getFiles();
-       for(File f :files){if (checkFile(f)){} else{correct = false;}}
-          
-       
-     }while(!correct);
+       files = getFiles();
       for (int i =0;i<files.length;i++){
           Integer[] bagpebblesvalues =readFile(files[i]);
           Pebble[] bagpebbles = new Pebble [bagpebblesvalues.length];
           for (int j = 0;j<bagpebblesvalues.length;j++){
               bagpebbles[j] =new Pebble(bagpebblesvalues[j]);}
           blackbags[i]= new BlackBag(blackbagnames[i],bagpebbles,new WhiteBag(whitebagnames[i],blackbags[i]));
-        }
-     
-    }
+    }}
    private static String getFileExtension(File a){
      String fileName = a.getName();
      if(fileName.lastIndexOf(".")!=-1&&fileName.lastIndexOf(".")!=0){
          return fileName.substring(fileName.lastIndexOf(".")+1);
-        }else {return "";}
+     } else {return "";}
     }
-   private  void getNoOfPlayers(){
+   private  void initialisePlayers() throws IllegalAmountOfPlayersException{
         Scanner scan = new Scanner (System.in);
         boolean correct = true;
+        int noofplayers=0;
         while(correct){
             try{
-        System.out.println("Enter Number of Players");
-         this.noofplayers = scan.nextInt();
-        correct = false;
-    } catch(java.util.InputMismatchException e){
-        System.out.println("Enter Legal Data");
-        scan.next();
+                System.out.println("Enter Number of Players");
+                String inp = scan.next();
+                if (inp.equals("E")){System.exit(0);}
+                noofplayers = Integer.valueOf(inp);
+                correct = false;
+                if (noofplayers<1){throw new IllegalAmountOfPlayersException("Please enter a legal amount of players");}
+             }catch(java.util.InputMismatchException|NumberFormatException e){
+                 System.out.println("Please write an integer");
         
     }
     }
+    players = new PebbleGame.Player[noofplayers];
+    for (int i = 0 ; i<players.length;i++){
+               players[i] = new PebbleGame.Player("Player "+i);
+            }
         }
-   private static File[] getFiles(){
-        File[] files = new File[3];
+    public void setGameWon(){
+        gamewon.set(true);
+    }
+   private  File[] getFiles() {
+        File[] files = new File[Constants.AMOUNT_OF_BAGS.getInt()];
         Scanner scan = new Scanner (System.in);
         boolean correct = true;
         while (correct){
-                String [] filenames = new String[3];
-                for (int i=1 ;i<4;i++){
-                System.out.println("Please enter the file path of file "+i);
-                filenames[i-1] = scan.next();
-                File a = new File(filenames[i-1]);
-                files[i-1]=a;
-            }
-            correct = !(checkFile(files[0])&& checkFile(files[1])&& checkFile(files[2]));
-                
-            }
-        return files;
-    }
+             correct = false;
+                String [] filenames = new String[files.length];
+                for (int j=0 ;j<files.length;j++){
+                System.out.println("Please enter the file path of file "+(j+1));
+                filenames[j] = scan.next();
+                if (filenames[j].equals("E")){System.exit(0);}
+                File a = new File(filenames[j]);
+                files[j]=a;
+                try{
+                checkFile(files[j]);}
+                catch(InvalidFileException e){ correct=true;System.out.println("Please, enter a correct filepath");break;}
+            
+        }}
+    return files;
+}
    @Override
    public void run(){
         for (Thread t : players){
             t.start();
         }
-        try{
-            Thread.sleep(1000);
-        }
-        catch (InterruptedException e){
-            for (Thread t : players){
-                t.interrupt();
-            }
-        }
        }
    private  class Player extends Thread{
+       private FileWriter fw = new FileWriter();
        private final String playername ;
        private  final Pebble[] hand = new Pebble[10];
        private BlackBag previousbag;
        private  int handweight=0; 
        private int emptyentries = 10;
-       Player(){
-           playername="Player"+noofplayers;
-       }
        Player(String name){
            playername=name;
        }
@@ -154,7 +138,8 @@ public class PebbleGame implements Runnable
             }
             return sum;
        }
-       public void printHand(){String q = "Hand : ";for (Pebble i : hand){if(i!=null){q= q+","+i.getWeight();}} System.out.println(q);}
+       public void printHand(){String q = playername+" hand is ";
+           for (Pebble i : hand){if(i!=null){q= q+i.getWeight()+",";}} fw.writeToFile(q.substring(0,q.length()-1));}
        public void drawPebble(){
            //ADD AN EXCEPTION
            BlackBag bag;
@@ -165,23 +150,22 @@ public class PebbleGame implements Runnable
                    emptyindex = i;
                 }
             }
-            if (emptyindex <0){
-                return;
-            }
            boolean isempty;
            int bagindex;
            do {
            bagindex = (randomno.nextInt(3)) ;
            bag = blackbags[bagindex];
-           try{hand[emptyindex]=bag.drawPebble();isempty=false;}
+           try{hand[emptyindex]=bag.drawPebble();
+               isempty=false;}
            catch(OutOfPebblesException e){isempty = true;}}
            while(isempty);
            previousbag = bag;
            emptyentries--;
            handweight+=hand[emptyindex].getWeight();
-              
+           fw.writeToFile(playername+ " has drawn a "+ hand[emptyindex].getWeight() +" from bag "+bag.getName());
+           printHand();
         }  
-       public void discardPebble(){
+       public void discardPebble() {
             WhiteBag wb = previousbag.getPair();
             int pebbleindex = 0;
             int pebbleweight = 0;
@@ -205,7 +189,8 @@ public class PebbleGame implements Runnable
                 }
             }
             wb.discard(hand[pebbleindex]);
-            
+            fw.writeToFile(playername + " has discarded a "+pebbleweight + " to bag "+wb.getName());
+            printHand();
             handweight -=pebbleweight;
             hand[pebbleindex]=null;
             emptyentries++;
@@ -218,34 +203,22 @@ public class PebbleGame implements Runnable
        }
        @Override
         public void run(){
-            boolean won = false;
-            while (!won&&!Thread.currentThread().isInterrupted()){
-                
-            while(emptyentries>0&&handweight<100&&!Thread.currentThread().isInterrupted()){
+            fw.createFile(playername+".txt");
+            while (!gamewon.get()){
+            while(emptyentries>0&&handweight<100&&!gamewon.get()){
                  drawPebble();
                 }
-            if (checkWinConditions(this)){won=true;}
+            if (checkWinConditions(this)){PebbleGame.this.setGameWon();}
             else{discardPebble();}
             }
-            String endingstr = "My name is"+getPlayerName()+ "My hand is "+hand[0].getWeight();
-            for (int i =1;i<hand.length;i++){
-                if (hand[i]!=null){
-                endingstr = endingstr + ","+hand[i].getWeight();}
-            }System.out.println(endingstr);
        }
         
     }
    
-    public static void main (String args[]){
+    public static void main (String args[]) throws IllegalFileFormatException, IllegalWeightException, InsufficientAmountOfPebblesException, OutOfPebblesException, IllegalAmountOfPlayersException{
         PebbleGame game1 = new PebbleGame();
-        game1.getNoOfPlayers();
-        game1.gamethread = new Thread(game1);
-        game1.players = new PebbleGame.Player[game1.noofplayers];
+        game1.initialisePlayers();
         game1.initialiseBags();
-        for (int i = 0;i<game1.players.length;i++){
-            game1.addPlayer("Player "+i);
-        }
-        
-        game1.gamethread.start();
+        game1.run();
     }
 }

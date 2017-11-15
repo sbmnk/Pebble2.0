@@ -1,4 +1,4 @@
-package Pebble_app;
+ 
 
 
 /**
@@ -10,9 +10,8 @@ package Pebble_app;
 public class WhiteBag extends Bag
 { private final BlackBag pair;
  
- WhiteBag ( String bagname , BlackBag bb) throws InvalidBagException{
+ WhiteBag ( String bagname , BlackBag bb) {
      pebbles = new Pebble[0];
-     if (bb == null){throw new InvalidBagException("Please enter a valid BlackBag"); }
      pair = bb;
      this.bagname = bagname;
  }

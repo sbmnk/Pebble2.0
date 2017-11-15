@@ -1,4 +1,4 @@
-package Pebble_app;
+ 
 
 
 /**
@@ -8,6 +8,7 @@ package Pebble_app;
  * @version (a version number or a date)
  */
 public class IllegalWeightException extends Exception
-{String msg;
-   IllegalWeightException(String msg){this.msg=msg;}
+{
+   public IllegalWeightException (){super();} 
+   public IllegalWeightException(String msg){super(msg);}
 }
