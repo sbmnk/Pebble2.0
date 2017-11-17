@@ -1,5 +1,7 @@
  
 
+ 
+
 
 /**
  * Write a description of class Bag here.
@@ -12,7 +14,6 @@ public abstract class Bag
    protected Pebble [] pebbles ;
    protected String bagname;
    public String getName(){return this.bagname;}
-   
+   public void setName(String name){bagname = name;};
     
-    public Pebble[] getPebbleArray(){ return this.pebbles;}
 }
